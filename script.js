@@ -11,19 +11,15 @@ downloadBtn.addEventListener("click", async () => {
   }
 
   try {
-    const parsedUrl = new URL(url);
-
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      throw new Error("Invalid URL");
-    }
+    new URL(url);
   } catch {
-    message.textContent = "Please enter a valid video URL.";
+    message.textContent = "Please enter a valid URL.";
     return;
   }
 
   downloadBtn.disabled = true;
-  downloadBtn.textContent = "Checking...";
-  message.textContent = "Detecting video source...";
+  downloadBtn.textContent = "Downloading...";
+  message.textContent = "Preparing your video...";
 
   try {
     const response = await fetch(
@@ -33,26 +29,41 @@ downloadBtn.addEventListener("click", async () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          url: url
-        })
+        body: JSON.stringify({ url })
       }
     );
 
-    const data = await response.json();
+    const contentType =
+      response.headers.get("content-type") || "";
 
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Unable to process this link."
-      );
+    if (!response.ok || !contentType.startsWith("video/")) {
+      let errorMessage = "This video could not be downloaded.";
+
+      try {
+        const data = await response.json();
+        errorMessage = data.message || errorMessage;
+      } catch {}
+
+      throw new Error(errorMessage);
     }
 
-    message.textContent =
-      `${data.source} detected successfully.`;
+    const blob = await response.blob();
 
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = downloadUrl;
+    link.download = "vidload-video.mp4";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(downloadUrl);
+
+    message.textContent = "Download started successfully!";
   } catch (error) {
     console.error(error);
-
     message.textContent =
       error.message || "Something went wrong.";
   } finally {

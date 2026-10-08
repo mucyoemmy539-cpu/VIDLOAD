@@ -1,6 +1,7 @@
 export default function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
+      success: false,
       message: "Method not allowed"
     });
   }
@@ -9,6 +10,7 @@ export default function handler(req, res) {
 
   if (!url) {
     return res.status(400).json({
+      success: false,
       message: "Video URL is required."
     });
   }
@@ -18,6 +20,7 @@ export default function handler(req, res) {
 
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
       return res.status(400).json({
+        success: false,
         message: "Only HTTP and HTTPS URLs are supported."
       });
     }
@@ -30,6 +33,7 @@ export default function handler(req, res) {
 
   } catch (error) {
     return res.status(400).json({
+      success: false,
       message: "Invalid URL."
     });
   }

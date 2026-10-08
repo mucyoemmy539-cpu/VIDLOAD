@@ -1,14 +1,12 @@
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader(
     "Access-Control-Allow-Origin",
     "https://mucyoemmy539-cpu.github.io"
   );
-
   res.setHeader(
     "Access-Control-Allow-Methods",
     "POST, OPTIONS"
   );
-
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type"
@@ -44,62 +42,42 @@ export default function handler(req, res) {
       });
     }
 
-    const hostname = parsedUrl.hostname
-      .toLowerCase()
-      .replace(/^www\./, "");
+    const response = await fetch(parsedUrl.href);
 
-    let source = "Unknown";
-
-    if (
-      hostname === "youtube.com" ||
-      hostname.endsWith(".youtube.com") ||
-      hostname === "youtu.be"
-    ) {
-      source = "YouTube";
-    } else if (
-      hostname === "facebook.com" ||
-      hostname.endsWith(".facebook.com")
-    ) {
-      source = "Facebook";
-    } else if (
-      hostname === "tiktok.com" ||
-      hostname.endsWith(".tiktok.com")
-    ) {
-      source = "TikTok";
-    } else if (
-      hostname === "instagram.com" ||
-      hostname.endsWith(".instagram.com")
-    ) {
-      source = "Instagram";
-    } else if (
-      hostname === "vimeo.com" ||
-      hostname.endsWith(".vimeo.com")
-    ) {
-      source = "Vimeo";
-    } else if (
-      hostname === "dailymotion.com" ||
-      hostname.endsWith(".dailymotion.com")
-    ) {
-      source = "Dailymotion";
-    }
-
-    if (source === "Unknown") {
+    if (!response.ok) {
       return res.status(400).json({
         success: false,
-        message: "This website is not supported yet."
+        message: "Could not access this video file."
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      source: source,
-      message: `${source} link detected successfully.`
-    });
+    const contentType =
+      response.headers.get("content-type") || "";
 
-  } catch {
-    return res.status(400).json({
+    if (!contentType.startsWith("video/")) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This is not a direct video file. Use a direct public video URL such as an MP4 link."
+      });
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="vidload-video.mp4"'
+    );
+
+    return res.status(200).send(buffer);
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
       success: false,
-      message: "Invalid URL."
+      message: "Failed to download the video."
     });
   }
 }

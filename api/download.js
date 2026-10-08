@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (!url) {
     return res.status(400).json({
       success: false,
-      message: "Video URL is required."
+      message: "Please provide a video URL."
     });
   }
 
@@ -33,45 +33,55 @@ export default async function handler(req, res) {
     });
   }
 
-  try {
-    const response = await fetch(url);
+  const hostname = parsedUrl.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
 
-    if (!response.ok) {
-      return res.status(400).json({
-        success: false,
-        message: "The video could not be downloaded."
-      });
-    }
+  let source = "Unknown";
 
-    const contentType =
-      response.headers.get("content-type") || "";
+  if (
+    hostname === "youtube.com" ||
+    hostname.endsWith(".youtube.com") ||
+    hostname === "youtu.be"
+  ) {
+    source = "YouTube";
+  } else if (
+    hostname === "facebook.com" ||
+    hostname.endsWith(".facebook.com")
+  ) {
+    source = "Facebook";
+  } else if (
+    hostname === "tiktok.com" ||
+    hostname.endsWith(".tiktok.com")
+  ) {
+    source = "TikTok";
+  } else if (
+    hostname === "instagram.com" ||
+    hostname.endsWith(".instagram.com")
+  ) {
+    source = "Instagram";
+  } else if (
+    hostname === "vimeo.com" ||
+    hostname.endsWith(".vimeo.com")
+  ) {
+    source = "Vimeo";
+  } else if (
+    hostname === "dailymotion.com" ||
+    hostname.endsWith(".dailymotion.com")
+  ) {
+    source = "Dailymotion";
+  }
 
-    if (!contentType.startsWith("video/")) {
-      return res.status(400).json({
-        success: false,
-        message: "This URL is not a direct video file."
-      });
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-
-    const filename = "vidload-video.mp4";
-
-    res.setHeader("Content-Type", contentType);
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${filename}"`
-    );
-    res.setHeader("Content-Length", buffer.length);
-
-    return res.status(200).send(buffer);
-
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
+  if (source === "Unknown") {
+    return res.status(400).json({
       success: false,
-      message: "Download failed."
+      message: "This website is not supported yet."
     });
   }
+
+  return res.status(200).json({
+    success: true,
+    source,
+    message: `${source} link detected successfully.`
+  });
 }

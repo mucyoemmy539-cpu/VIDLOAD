@@ -11,15 +11,19 @@ downloadBtn.addEventListener("click", async () => {
   }
 
   try {
-    new URL(url);
+    const parsedUrl = new URL(url);
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      throw new Error("Invalid URL");
+    }
   } catch {
     message.textContent = "Please enter a valid video URL.";
     return;
   }
 
   downloadBtn.disabled = true;
-  downloadBtn.textContent = "Downloading...";
-  message.textContent = "Preparing your download...";
+  downloadBtn.textContent = "Checking...";
+  message.textContent = "Detecting video source...";
 
   try {
     const response = await fetch(
@@ -29,40 +33,28 @@ downloadBtn.addEventListener("click", async () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({
+          url: url
+        })
       }
     );
 
+    const data = await response.json();
+
     if (!response.ok) {
-      let errorMessage = "Download failed.";
-
-      try {
-        const data = await response.json();
-        errorMessage = data.message || errorMessage;
-      } catch {}
-
-      throw new Error(errorMessage);
+      throw new Error(
+        data.message || "Unable to process this link."
+      );
     }
 
-    const blob = await response.blob();
-
-    const downloadUrl = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = "vidload-video.mp4";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    URL.revokeObjectURL(downloadUrl);
-
-    message.textContent = "Download started successfully.";
+    message.textContent =
+      `${data.source} detected successfully.`;
 
   } catch (error) {
     console.error(error);
-    message.textContent = error.message;
+
+    message.textContent =
+      error.message || "Something went wrong.";
   } finally {
     downloadBtn.disabled = false;
     downloadBtn.textContent = "Download";

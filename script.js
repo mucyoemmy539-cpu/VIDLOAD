@@ -53,7 +53,7 @@ function detectSource(url) {
   return "Unknown";
 }
 
-downloadBtn.addEventListener("click", () => {
+downloadBtn.addEventListener("click", async () => {
   const url = videoUrl.value.trim();
 
   if (!url) {
@@ -71,16 +71,36 @@ downloadBtn.addEventListener("click", () => {
     const source = detectSource(url);
 
     if (source === "Unknown") {
-      message.textContent =
-        "This website is not supported yet.";
+      message.textContent = "This website is not supported yet.";
+      return;
+    }
+
+    message.textContent = `Connecting to VIDLOAD...`;
+
+    const response = await fetch("https://YOUR-VERCEL-DOMAIN.vercel.app/api/download", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        url: url
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      message.textContent = data.message || "Something went wrong.";
       return;
     }
 
     message.textContent =
-      `Source detected: ${source}`;
+      `Connected successfully. Source: ${source}`;
 
-  } catch {
+  } catch (error) {
+    console.error(error);
+
     message.textContent =
-      "Please enter a valid video URL.";
+      "Unable to connect to the VIDLOAD server.";
   }
 });

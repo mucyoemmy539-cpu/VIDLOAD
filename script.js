@@ -7,11 +7,7 @@ function detectSource(url) {
     .toLowerCase()
     .replace(/^www\./, "");
 
-  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
-    return "YouTube";
-  }
-
-  if (hostname === "youtu.be") {
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com") || hostname === "youtu.be") {
     return "YouTube";
   }
 
@@ -41,34 +37,30 @@ function detectSource(url) {
 downloadBtn.addEventListener("click", () => {
   const url = videoUrl.value.trim();
 
-  message.textContent = "";
-
   if (!url) {
     message.textContent = "Please paste a video link first.";
     return;
   }
 
-  let validUrl;
-
   try {
-    validUrl = new URL(url);
+    const parsedUrl = new URL(url);
 
-    if (!["http:", "https:"].includes(validUrl.protocol)) {
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
       throw new Error();
     }
-  } catch {
-    message.textContent = "Please enter a valid video URL.";
-    return;
-  }
 
-  const source = detectSource(url);
+    const source = detectSource(url);
 
-  if (source === "Unknown") {
+    if (source === "Unknown") {
+      message.textContent =
+        "This source is not supported yet.";
+      return;
+    }
+
     message.textContent =
-      "Source not supported yet. We will add more sources later.";
-    return;
+      `Source detected: ${source}`;
+      
+  } catch {
+    message.textContent = "Please enter a valid URL.";
   }
-
-  message.textContent =
-    `Source detected: ${source}. Download support will be connected next.`;
 });

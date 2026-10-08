@@ -2,57 +2,6 @@ const videoUrl = document.getElementById("videoUrl");
 const downloadBtn = document.getElementById("downloadBtn");
 const message = document.getElementById("message");
 
-function detectSource(url) {
-  const hostname = new URL(url).hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
-  if (
-    hostname === "youtube.com" ||
-    hostname.endsWith(".youtube.com") ||
-    hostname === "youtu.be"
-  ) {
-    return "YouTube";
-  }
-
-  if (
-    hostname === "vimeo.com" ||
-    hostname.endsWith(".vimeo.com")
-  ) {
-    return "Vimeo";
-  }
-
-  if (
-    hostname === "dailymotion.com" ||
-    hostname.endsWith(".dailymotion.com")
-  ) {
-    return "Dailymotion";
-  }
-
-  if (
-    hostname === "facebook.com" ||
-    hostname.endsWith(".facebook.com")
-  ) {
-    return "Facebook";
-  }
-
-  if (
-    hostname === "instagram.com" ||
-    hostname.endsWith(".instagram.com")
-  ) {
-    return "Instagram";
-  }
-
-  if (
-    hostname === "tiktok.com" ||
-    hostname.endsWith(".tiktok.com")
-  ) {
-    return "TikTok";
-  }
-
-  return "Unknown";
-}
-
 downloadBtn.addEventListener("click", async () => {
   const url = videoUrl.value.trim();
 
@@ -62,24 +11,17 @@ downloadBtn.addEventListener("click", async () => {
   }
 
   try {
-    const parsedUrl = new URL(url);
+    new URL(url);
+  } catch {
+    message.textContent = "Please enter a valid video URL.";
+    return;
+  }
 
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      throw new Error("Invalid protocol");
-    }
+  downloadBtn.disabled = true;
+  downloadBtn.textContent = "Downloading...";
+  message.textContent = "Preparing your download...";
 
-    const source = detectSource(url);
-
-    if (source === "Unknown") {
-      message.textContent = "This website is not supported yet.";
-      return;
-    }
-
-    message.textContent = "Connecting to VIDLOAD...";
-
-    downloadBtn.disabled = true;
-    downloadBtn.textContent = "Checking...";
-
+  try {
     const response = await fetch(
       "https://vidloada.vercel.app/api/download",
       {
@@ -87,29 +29,40 @@ downloadBtn.addEventListener("click", async () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          url: url
-        })
+        body: JSON.stringify({ url })
       }
     );
 
-    const data = await response.json();
-
     if (!response.ok) {
-      message.textContent =
-        data.message || "Something went wrong.";
-      return;
+      let errorMessage = "Download failed.";
+
+      try {
+        const data = await response.json();
+        errorMessage = data.message || errorMessage;
+      } catch {}
+
+      throw new Error(errorMessage);
     }
 
-    message.textContent =
-      `Connected successfully. Source: ${source}`;
+    const blob = await response.blob();
+
+    const downloadUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = "vidload-video.mp4";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(downloadUrl);
+
+    message.textContent = "Download started successfully.";
 
   } catch (error) {
     console.error(error);
-
-    message.textContent =
-      "Unable to connect to the VIDLOAD server.";
-
+    message.textContent = error.message;
   } finally {
     downloadBtn.disabled = false;
     downloadBtn.textContent = "Download";

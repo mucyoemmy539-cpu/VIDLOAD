@@ -2,7 +2,43 @@ const videoUrl = document.getElementById("videoUrl");
 const downloadBtn = document.getElementById("downloadBtn");
 const message = document.getElementById("message");
 
-downloadBtn.addEventListener("click", async () => {
+function detectSource(url) {
+  const hostname = new URL(url).hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
+    return "YouTube";
+  }
+
+  if (hostname === "youtu.be") {
+    return "YouTube";
+  }
+
+  if (hostname === "vimeo.com" || hostname.endsWith(".vimeo.com")) {
+    return "Vimeo";
+  }
+
+  if (hostname === "dailymotion.com" || hostname.endsWith(".dailymotion.com")) {
+    return "Dailymotion";
+  }
+
+  if (hostname === "facebook.com" || hostname.endsWith(".facebook.com")) {
+    return "Facebook";
+  }
+
+  if (hostname === "instagram.com" || hostname.endsWith(".instagram.com")) {
+    return "Instagram";
+  }
+
+  if (hostname === "tiktok.com" || hostname.endsWith(".tiktok.com")) {
+    return "TikTok";
+  }
+
+  return "Unknown";
+}
+
+downloadBtn.addEventListener("click", () => {
   const url = videoUrl.value.trim();
 
   message.textContent = "";
@@ -12,48 +48,27 @@ downloadBtn.addEventListener("click", async () => {
     return;
   }
 
+  let validUrl;
+
   try {
-    new URL(url);
+    validUrl = new URL(url);
+
+    if (!["http:", "https:"].includes(validUrl.protocol)) {
+      throw new Error();
+    }
   } catch {
-    message.textContent = "Please enter a valid URL.";
+    message.textContent = "Please enter a valid video URL.";
     return;
   }
 
-  downloadBtn.disabled = true;
-  downloadBtn.textContent = "Checking...";
-  message.textContent = "Checking your link...";
+  const source = detectSource(url);
 
-  try {
-    const response = await fetch("/api/download", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ url })
-    });
-
-    const contentType = response.headers.get("content-type") || "";
-
-    if (!contentType.includes("application/json")) {
-      throw new Error(
-        "The API is not available yet. Please check the Vercel deployment."
-      );
-    }
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Something went wrong.");
-    }
-
+  if (source === "Unknown") {
     message.textContent =
-      `Link received successfully from ${data.source}`;
-
-  } catch (error) {
-    console.error(error);
-    message.textContent = error.message;
-  } finally {
-    downloadBtn.disabled = false;
-    downloadBtn.textContent = "Download";
+      "Source not supported yet. We will add more sources later.";
+    return;
   }
+
+  message.textContent =
+    `Source detected: ${source}. Download support will be connected next.`;
 });

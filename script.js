@@ -7,27 +7,46 @@ function detectSource(url) {
     .toLowerCase()
     .replace(/^www\./, "");
 
-  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com") || hostname === "youtu.be") {
+  if (
+    hostname === "youtube.com" ||
+    hostname.endsWith(".youtube.com") ||
+    hostname === "youtu.be"
+  ) {
     return "YouTube";
   }
 
-  if (hostname === "vimeo.com" || hostname.endsWith(".vimeo.com")) {
+  if (
+    hostname === "vimeo.com" ||
+    hostname.endsWith(".vimeo.com")
+  ) {
     return "Vimeo";
   }
 
-  if (hostname === "dailymotion.com" || hostname.endsWith(".dailymotion.com")) {
+  if (
+    hostname === "dailymotion.com" ||
+    hostname.endsWith(".dailymotion.com")
+  ) {
     return "Dailymotion";
   }
 
-  if (hostname === "facebook.com" || hostname.endsWith(".facebook.com")) {
+  if (
+    hostname === "facebook.com" ||
+    hostname.endsWith(".facebook.com")
+  ) {
     return "Facebook";
   }
 
-  if (hostname === "instagram.com" || hostname.endsWith(".instagram.com")) {
+  if (
+    hostname === "instagram.com" ||
+    hostname.endsWith(".instagram.com")
+  ) {
     return "Instagram";
   }
 
-  if (hostname === "tiktok.com" || hostname.endsWith(".tiktok.com")) {
+  if (
+    hostname === "tiktok.com" ||
+    hostname.endsWith(".tiktok.com")
+  ) {
     return "TikTok";
   }
 
@@ -46,21 +65,22 @@ downloadBtn.addEventListener("click", () => {
     const parsedUrl = new URL(url);
 
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      throw new Error();
+      throw new Error("Invalid protocol");
     }
 
     const source = detectSource(url);
 
     if (source === "Unknown") {
       message.textContent =
-        "This source is not supported yet.";
+        "This website is not supported yet.";
       return;
     }
 
     message.textContent =
       `Source detected: ${source}`;
-      
+
   } catch {
-    message.textContent = "Please enter a valid URL.";
+    message.textContent =
+      "Please enter a valid video URL.";
   }
 });

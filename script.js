@@ -75,22 +75,29 @@ downloadBtn.addEventListener("click", async () => {
       return;
     }
 
-    message.textContent = `Connecting to VIDLOAD...`;
+    message.textContent = "Connecting to VIDLOAD...";
 
-    const response = await fetch("https://YOUR-VERCEL-DOMAIN.vercel.app/api/download", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        url: url
-      })
-    });
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = "Checking...";
+
+    const response = await fetch(
+      "https://vidloada.vercel.app/api/download",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          url: url
+        })
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      message.textContent = data.message || "Something went wrong.";
+      message.textContent =
+        data.message || "Something went wrong.";
       return;
     }
 
@@ -102,5 +109,9 @@ downloadBtn.addEventListener("click", async () => {
 
     message.textContent =
       "Unable to connect to the VIDLOAD server.";
+
+  } finally {
+    downloadBtn.disabled = false;
+    downloadBtn.textContent = "Download";
   }
 });

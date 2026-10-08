@@ -21,35 +21,37 @@ downloadBtn.addEventListener("click", async () => {
 
   downloadBtn.disabled = true;
   downloadBtn.textContent = "Checking...";
-  message.textContent = "Checking the video link...";
+  message.textContent = "Checking your link...";
 
   try {
-    // Backend tuzayihuza hano
     const response = await fetch("/api/download", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        url: url
-      })
+      body: JSON.stringify({ url })
     });
+
+    const contentType = response.headers.get("content-type") || "";
+
+    if (!contentType.includes("application/json")) {
+      throw new Error(
+        "The API is not available yet. Please check the Vercel deployment."
+      );
+    }
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Download failed.");
+      throw new Error(data.message || "Something went wrong.");
     }
 
-    message.textContent = "Your download is ready.";
-
-    if (data.downloadUrl) {
-      window.location.href = data.downloadUrl;
-    }
+    message.textContent =
+      `Link received successfully from ${data.source}`;
 
   } catch (error) {
-    message.textContent =
-      error.message || "Something went wrong.";
+    console.error(error);
+    message.textContent = error.message;
   } finally {
     downloadBtn.disabled = false;
     downloadBtn.textContent = "Download";
